@@ -1,15 +1,15 @@
 # ==============================================================================
-# Stage 1: Build binary using official Rust image
+# Stage 1: Build binary using latest official Rust image
 # ==============================================================================
-FROM rust:1.80-slim as builder
+FROM rust:latest as builder
 
 WORKDIR /app
 
 # Install build dependencies for OpenSSL / native-tls
 RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
 
-# Cache dependency compilation
-COPY Cargo.toml ./
+# Copy dependency files for layer caching
+COPY Cargo.toml Cargo.lock* ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs
 RUN cargo build --release && rm -rf src
 
