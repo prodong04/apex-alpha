@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  hl-collector:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hl-market-collector
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=info
+      - TARGET_COIN=BTC
+      - DATA_DIR=/app/data/live
+    volumes:
+      - ./data:/app/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
