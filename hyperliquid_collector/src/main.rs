@@ -23,7 +23,6 @@ const READ_TIMEOUT_SECS: u64 = 30;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // 1. Initialize structured logging
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -35,7 +34,7 @@ async fn main() -> Result<()> {
     let data_dir = env::var("DATA_DIR").unwrap_or_else(|_| DEFAULT_DATA_DIR.to_string());
 
     info!("============================================================");
-    info!("🚀 Hyperliquid Production Market Data Collector");
+    info!("🚀 Hyperliquid Full L2 20-Depth & Tick Collector");
     info!("🎯 Target Symbol : {}", target_coin);
     info!("📁 Output Dir    : {}", data_dir);
     info!("💓 Ping Interval : {}s | ⏱️ Read Timeout: {}s", PING_INTERVAL_SECS, READ_TIMEOUT_SECS);
@@ -46,7 +45,7 @@ async fn main() -> Result<()> {
     let is_running = Arc::new(AtomicBool::new(true));
     let is_running_clone = is_running.clone();
 
-    // 2. Setup graceful shutdown for Docker / AWS SIGTERM / SIGINT
+    // Setup graceful shutdown for Docker / AWS SIGTERM / SIGINT
     tokio::spawn(async move {
         if let Ok(()) = tokio::signal::ctrl_c().await {
             info!("🛑 Received termination signal (SIGINT/SIGTERM). Shutting down cleanly...");
@@ -85,7 +84,6 @@ async fn main() -> Result<()> {
             }
         }
 
-        // If connected for more than 60s, reset backoff to 1s
         if start_time.elapsed() > Duration::from_secs(60) {
             retry_backoff_secs = 1;
         } else {
@@ -127,7 +125,7 @@ async fn run_collector(
     write
         .send(Message::Text(serde_json::to_string(&sub_l2)?))
         .await?;
-    info!("✅ Subscribed: {} L2 Orderbook Depth", target_coin);
+    info!("✅ Subscribed: {} Full L2 Orderbook Depth (20 levels)", target_coin);
 
     // 2. Subscribe to Real-Time Trades Stream
     let sub_trades = WsSubscriptionRequest {
@@ -170,7 +168,7 @@ async fn run_collector(
     if is_new_l2_file {
         writeln!(
             l2_writer,
-            "timestamp_ms,datetime_utc,coin,best_bid_px,best_bid_sz,best_ask_px,best_ask_sz,spread,bid_depth_levels,ask_depth_levels"
+            "timestamp_ms,datetime_utc,coin,best_bid_px,best_bid_sz,best_ask_px,best_ask_sz,spread,bids,asks"
         )?;
         l2_writer.flush()?;
     }
@@ -181,7 +179,6 @@ async fn run_collector(
 
     while is_running.load(Ordering::SeqCst) {
         tokio::select! {
-            // Heartbeat: Proactive Client Ping to keep connection alive through cloud NAT/proxies
             _ = ping_ticker.tick() => {
                 let ping_msg = serde_json::json!({"method": "ping"}).to_string();
                 if let Err(e) = write.send(Message::Text(ping_msg)).await {
@@ -191,7 +188,6 @@ async fn run_collector(
                 debug!("Heartbeat ping sent to Hyperliquid.");
             }
 
-            // Message Receiver with Read Timeout to prevent dead/half-open socket hangs
             msg_opt = timeout(Duration::from_secs(READ_TIMEOUT_SECS), read.next()) => {
                 match msg_opt {
                     Ok(Some(Ok(msg))) => {
@@ -233,9 +229,13 @@ async fn run_collector(
                                                 .unwrap_or_else(Utc::now);
                                             let dt_str = dt.format("%Y-%m-%d %H:%M:%S%.3f").to_string();
 
+                                            // Serialize full 20-level Depth arrays (px, sz, n)
+                                            let bids_json = serde_json::to_string(bids).unwrap_or_else(|_| "[]".to_string());
+                                            let asks_json = serde_json::to_string(asks).unwrap_or_else(|_| "[]".to_string());
+
                                             writeln!(
                                                 l2_writer,
-                                                "{},{},{},{},{},{},{},{:.2},{},{}",
+                                                "{},{},{},{},{},{},{},{:.2},\"{}\",\"{}\"",
                                                 data.time,
                                                 dt_str,
                                                 data.coin,
@@ -244,15 +244,15 @@ async fn run_collector(
                                                 ask.px,
                                                 ask.sz,
                                                 spread,
-                                                bids.len(),
-                                                asks.len()
+                                                bids_json.replace('"', "\"\""),
+                                                asks_json.replace('"', "\"\"")
                                             )?;
 
                                             total_books.fetch_add(1, Ordering::Relaxed);
 
                                             if last_log_time.elapsed() >= Duration::from_secs(2) {
                                                 info!(
-                                                    "⚡ [LIVE {}] Best Bid: {} (${}) | Best Ask: {} (${}) | Spread: ${:.2} | Saved Trades: {} | Saved Books: {}",
+                                                    "⚡ [LIVE {}] Best Bid: {} (${}) | Best Ask: {} (${}) | Spread: ${:.2} | Saved Trades: {} | Saved Books: {} (Full 20-levels)",
                                                     data.coin,
                                                     bid.px,
                                                     bid.sz,
@@ -293,7 +293,6 @@ async fn run_collector(
                             _ => {}
                         }
 
-                        // Periodic flush every 1 second
                         if last_flush_time.elapsed() >= Duration::from_secs(1) {
                             let _ = trades_writer.flush();
                             let _ = l2_writer.flush();
