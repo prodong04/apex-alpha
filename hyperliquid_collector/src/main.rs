@@ -23,6 +23,7 @@ const READ_TIMEOUT_SECS: u64 = 30;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // 1. Initialize structured logging
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -33,19 +34,19 @@ async fn main() -> Result<()> {
     let target_coin = env::var("TARGET_COIN").unwrap_or_else(|_| DEFAULT_COIN.to_string());
     let data_dir = env::var("DATA_DIR").unwrap_or_else(|_| DEFAULT_DATA_DIR.to_string());
 
-    info!("============================================================");
-    info!("🚀 Hyperliquid Full L2 20-Depth & Tick Collector");
+    info!("==================================================================");
+    info!("🚀 Hyperliquid Complete Quant Pipeline (Trades + 20-Depth + Metrics)");
     info!("🎯 Target Symbol : {}", target_coin);
     info!("📁 Output Dir    : {}", data_dir);
     info!("💓 Ping Interval : {}s | ⏱️ Read Timeout: {}s", PING_INTERVAL_SECS, READ_TIMEOUT_SECS);
-    info!("============================================================");
+    info!("==================================================================");
 
     create_dir_all(&data_dir)?;
 
     let is_running = Arc::new(AtomicBool::new(true));
     let is_running_clone = is_running.clone();
 
-    // Setup graceful shutdown for Docker / AWS SIGTERM / SIGINT
+    // 2. Setup graceful shutdown for Docker / AWS SIGTERM / SIGINT
     tokio::spawn(async move {
         if let Ok(()) = tokio::signal::ctrl_c().await {
             info!("🛑 Received termination signal (SIGINT/SIGTERM). Shutting down cleanly...");
@@ -55,6 +56,7 @@ async fn main() -> Result<()> {
 
     let total_trades = Arc::new(AtomicU64::new(0));
     let total_books = Arc::new(AtomicU64::new(0));
+    let total_metrics = Arc::new(AtomicU64::new(0));
     let mut retry_backoff_secs: u64 = 1;
 
     while is_running.load(Ordering::SeqCst) {
@@ -66,6 +68,7 @@ async fn main() -> Result<()> {
             &data_dir,
             total_trades.clone(),
             total_books.clone(),
+            total_metrics.clone(),
             is_running.clone(),
         )
         .await
@@ -105,6 +108,7 @@ async fn run_collector(
     data_dir: &str,
     total_trades: Arc<AtomicU64>,
     total_books: Arc<AtomicU64>,
+    total_metrics: Arc<AtomicU64>,
     is_running: Arc<AtomicBool>,
 ) -> Result<()> {
     let url = url::Url::parse(HL_WS_URL)?;
@@ -115,7 +119,7 @@ async fn run_collector(
     info!("⚡ Connected! Handshake Status: {}", response.status());
     let (mut write, mut read) = ws_stream.split();
 
-    // 1. Subscribe to L2 Book Depth
+    // 1. Subscribe to L2 Book Depth (20 levels)
     let sub_l2 = WsSubscriptionRequest {
         method: "subscribe".to_string(),
         subscription: SubscriptionType::L2Book {
@@ -137,10 +141,24 @@ async fn run_collector(
     write
         .send(Message::Text(serde_json::to_string(&sub_trades)?))
         .await?;
-    info!("✅ Subscribed: {} Real-Time Trades (Ticks)", target_coin);
+    info!("✅ Subscribed: {} Real-Time Trades (Ticks with TID)", target_coin);
 
-    // 3. Prepare Append File Writers
+    // 3. Subscribe to Active Asset Context (Funding, Open Interest, Oracle, Impact Prices)
+    let sub_metrics = WsSubscriptionRequest {
+        method: "subscribe".to_string(),
+        subscription: SubscriptionType::ActiveAssetCtx {
+            coin: target_coin.to_string(),
+        },
+    };
+    write
+        .send(Message::Text(serde_json::to_string(&sub_metrics)?))
+        .await?;
+    info!("✅ Subscribed: {} Real-Time Asset Context (Funding / OI / Mark / Impact)", target_coin);
+
+    // 4. Prepare Append File Writers
     let coin_lower = target_coin.to_lowercase();
+
+    // Trades CSV Writer
     let trades_file_path = format!("{}/{}_trades_live.csv", data_dir, coin_lower);
     let is_new_trades_file = !Path::new(&trades_file_path).exists();
     let trades_file = OpenOptions::new()
@@ -152,11 +170,12 @@ async fn run_collector(
     if is_new_trades_file {
         writeln!(
             trades_writer,
-            "timestamp_ms,datetime_utc,coin,side,price,size,hash"
+            "timestamp_ms,datetime_utc,coin,side,price,size,hash,tid"
         )?;
         trades_writer.flush()?;
     }
 
+    // L2 Book Depth CSV Writer
     let l2_file_path = format!("{}/{}_l2book_live.csv", data_dir, coin_lower);
     let is_new_l2_file = !Path::new(&l2_file_path).exists();
     let l2_file = OpenOptions::new()
@@ -171,6 +190,23 @@ async fn run_collector(
             "timestamp_ms,datetime_utc,coin,best_bid_px,best_bid_sz,best_ask_px,best_ask_sz,spread,bids,asks"
         )?;
         l2_writer.flush()?;
+    }
+
+    // Asset Metrics CSV Writer (Funding, OI, Oracle, Impact)
+    let metrics_file_path = format!("{}/{}_metrics_live.csv", data_dir, coin_lower);
+    let is_new_metrics_file = !Path::new(&metrics_file_path).exists();
+    let metrics_file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&metrics_file_path)?;
+    let mut metrics_writer = BufWriter::new(metrics_file);
+
+    if is_new_metrics_file {
+        writeln!(
+            metrics_writer,
+            "timestamp_ms,datetime_utc,coin,funding_rate,open_interest,oracle_px,mark_px,mid_px,premium,impact_bid_px,impact_ask_px,day_ntl_vlm"
+        )?;
+        metrics_writer.flush()?;
     }
 
     let mut last_log_time = Instant::now();
@@ -202,14 +238,15 @@ async fn run_collector(
 
                                             writeln!(
                                                 trades_writer,
-                                                "{},{},{},{},{},{},{}",
+                                                "{},{},{},{},{},{},{},{}",
                                                 trade.time,
                                                 dt_str,
                                                 trade.coin,
                                                 trade.side,
                                                 trade.px,
                                                 trade.sz,
-                                                trade.hash
+                                                trade.hash,
+                                                trade.tid
                                             )?;
 
                                             total_trades.fetch_add(1, Ordering::Relaxed);
@@ -252,7 +289,7 @@ async fn run_collector(
 
                                             if last_log_time.elapsed() >= Duration::from_secs(2) {
                                                 info!(
-                                                    "⚡ [LIVE {}] Best Bid: {} (${}) | Best Ask: {} (${}) | Spread: ${:.2} | Saved Trades: {} | Saved Books: {} (Full 20-levels)",
+                                                    "⚡ [LIVE {}] Best Bid: {} (${}) | Best Ask: {} (${}) | Spread: ${:.2} | Saved: Trades {} | Books {} (20-depth) | Metrics {}",
                                                     data.coin,
                                                     bid.px,
                                                     bid.sz,
@@ -260,11 +297,42 @@ async fn run_collector(
                                                     ask.sz,
                                                     spread,
                                                     total_trades.load(Ordering::Relaxed),
-                                                    total_books.load(Ordering::Relaxed)
+                                                    total_books.load(Ordering::Relaxed),
+                                                    total_metrics.load(Ordering::Relaxed)
                                                 );
                                                 last_log_time = Instant::now();
                                             }
                                         }
+                                    }
+                                    Ok(WsMessage::ActiveAssetCtx { data }) => {
+                                        let now = Utc::now();
+                                        let ts = now.timestamp_millis();
+                                        let dt_str = now.format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                                        let ctx = &data.ctx;
+
+                                        let impact_bid = ctx.impact_pxs.as_ref().and_then(|p| p.get(0)).map(|s| s.as_str()).unwrap_or("");
+                                        let impact_ask = ctx.impact_pxs.as_ref().and_then(|p| p.get(1)).map(|s| s.as_str()).unwrap_or("");
+                                        let mid_px = ctx.mid_px.as_deref().unwrap_or("");
+                                        let premium = ctx.premium.as_deref().unwrap_or("");
+
+                                        writeln!(
+                                            metrics_writer,
+                                            "{},{},{},{},{},{},{},{},{},{},{},{}",
+                                            ts,
+                                            dt_str,
+                                            data.coin,
+                                            ctx.funding,
+                                            ctx.open_interest,
+                                            ctx.oracle_px,
+                                            ctx.mark_px,
+                                            mid_px,
+                                            premium,
+                                            impact_bid,
+                                            impact_ask,
+                                            ctx.day_ntl_vlm
+                                        )?;
+
+                                        total_metrics.fetch_add(1, Ordering::Relaxed);
                                     }
                                     Ok(WsMessage::SubscriptionResponse { data }) => {
                                         info!("Subscription confirmed: {:?}", data);
@@ -293,9 +361,11 @@ async fn run_collector(
                             _ => {}
                         }
 
+                        // Periodic flush every 1 second across all writers
                         if last_flush_time.elapsed() >= Duration::from_secs(1) {
                             let _ = trades_writer.flush();
                             let _ = l2_writer.flush();
+                            let _ = metrics_writer.flush();
                             last_flush_time = Instant::now();
                         }
                     }
@@ -316,8 +386,9 @@ async fn run_collector(
         }
     }
 
-    info!("Flushing file buffers before disconnecting...");
+    info!("Flushing all file buffers before disconnecting...");
     let _ = trades_writer.flush();
     let _ = l2_writer.flush();
+    let _ = metrics_writer.flush();
     Ok(())
 }

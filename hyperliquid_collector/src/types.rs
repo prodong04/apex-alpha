@@ -50,6 +50,35 @@ pub struct Trade {
     pub tid: u64,
 }
 
+/// Asset Context (Funding, Open Interest, Oracle Price, Impact Prices)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AssetContext {
+    pub funding: String,
+    #[serde(rename = "openInterest")]
+    pub open_interest: String,
+    #[serde(rename = "oraclePx")]
+    pub oracle_px: String,
+    #[serde(rename = "markPx", default)]
+    pub mark_px: String,
+    #[serde(rename = "midPx", default)]
+    pub mid_px: Option<String>,
+    #[serde(rename = "dayNtlVlm", default)]
+    pub day_ntl_vlm: String,
+    #[serde(rename = "impactPxs", default)]
+    pub impact_pxs: Option<Vec<String>>,
+    #[serde(default)]
+    pub premium: Option<String>,
+    #[serde(rename = "prevDayPx", default)]
+    pub prev_day_px: Option<String>,
+}
+
+/// Active Asset Context wrapper payload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ActiveAssetCtxData {
+    pub coin: String,
+    pub ctx: AssetContext,
+}
+
 /// General inbound WebSocket message from Hyperliquid
 #[derive(Debug, Deserialize)]
 #[serde(tag = "channel")]
@@ -58,6 +87,8 @@ pub enum WsMessage {
     L2Book { data: L2BookData },
     #[serde(rename = "trades")]
     Trades { data: Vec<Trade> },
+    #[serde(rename = "activeAssetCtx")]
+    ActiveAssetCtx { data: ActiveAssetCtxData },
     #[serde(rename = "subscriptionResponse")]
     SubscriptionResponse { data: serde_json::Value },
     #[serde(rename = "pong")]
