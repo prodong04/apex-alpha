@@ -60,6 +60,8 @@ pub enum WsMessage {
     Trades { data: Vec<Trade> },
     #[serde(rename = "subscriptionResponse")]
     SubscriptionResponse { data: serde_json::Value },
+    #[serde(rename = "pong")]
+    Pong,
     #[serde(other)]
     Unknown,
 }
