@@ -1,16 +1,19 @@
 version: '3.8'
 
 services:
-  hl-collector:
+  market-collector:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: hl-market-collector
+    container_name: crypto-market-collector
     restart: unless-stopped
     environment:
       - RUST_LOG=info
       - TARGET_COIN=BTC
       - DATA_DIR=/app/data/live
+      - ENABLE_BINANCE_SPOT=true
+      - ENABLE_BINANCE_FUTURES=true
+      - ENABLE_HYPERLIQUID=true
     volumes:
       - ./data:/app/data
     logging:

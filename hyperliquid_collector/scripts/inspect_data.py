@@ -1,80 +1,91 @@
 #!/usr/bin/env python3
 """
-Hyperliquid Live Market Data Inspector
-======================================
-Inspect collected real-time trades and L2 book depth files with summary statistics.
+Multi-Exchange Live Market Data Inspector
+=========================================
+Inspect collected real-time market data across Binance Spot, Binance Futures, and Hyperliquid.
 """
 
 import os
 import csv
-import sys
 import argparse
 
-def inspect_trades(coin="BTC", data_dir="data/live"):
-    coin_lower = coin.lower()
-    trades_file = os.path.join(data_dir, f"{coin_lower}_trades_live.csv")
-    l2_file = os.path.join(data_dir, f"{coin_lower}_l2book_live.csv")
+def count_rows(file_path):
+    if not os.path.exists(file_path):
+        return 0
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        return max(0, sum(1 for _ in f) - 1)
 
-    if not os.path.exists(trades_file):
-        print(f"[-] No trades file found at {trades_file}")
-        return
-
-    total_count = 0
-    buy_vol = 0.0
-    sell_vol = 0.0
-    buy_count = 0
-    sell_count = 0
-    last_trades = []
-    prices = []
-
-    with open(trades_file, 'r', encoding='utf-8') as f:
+def get_last_row(file_path):
+    if not os.path.exists(file_path):
+        return None
+    last = None
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            total_count += 1
-            sz = float(row['size'])
-            px = float(row['price'])
-            prices.append(px)
-            
-            if row['side'] == 'B':
-                buy_vol += sz
-                buy_count += 1
-            else:
-                sell_vol += sz
-                sell_count += 1
+            last = row
+    return last
 
-            if len(last_trades) >= 5:
-                last_trades.pop(0)
-            last_trades.append(row)
+def inspect_all(coin="BTC", data_dir="data/live"):
+    coin_lower = coin.lower()
+    
+    print("\n" + "=" * 75)
+    print(f"📊 [UNIFIED MULTI-EXCHANGE DATA INSPECTOR] Symbol: {coin.upper()}")
+    print("=" * 75)
 
-    if total_count == 0:
-        print(f"No trade records found in {trades_file}.")
-        return
+    # 1. Binance Spot
+    spot_dir = os.path.join(data_dir, "binance_spot")
+    s_depth = os.path.join(spot_dir, f"{coin_lower}_depth20_live.csv")
+    s_bbo = os.path.join(spot_dir, f"{coin_lower}_bbo_live.csv")
+    s_trades = os.path.join(spot_dir, f"{coin_lower}_aggtrades_live.csv")
 
-    total_vol = buy_vol + sell_vol
-    min_px = min(prices)
-    max_px = max(prices)
-    last_px = prices[-1]
+    print("\n🟡 [1. BINANCE SPOT (현물)]")
+    print(f"  • L2 20-Depth (100ms) : {count_rows(s_depth):>8,} rows ({os.path.getsize(s_depth)/1024/1024:.2f} MB)" if os.path.exists(s_depth) else "  • L2 Depth : No data")
+    print(f"  • Real-time BBO (0ms) : {count_rows(s_bbo):>8,} rows ({os.path.getsize(s_bbo)/1024/1024:.2f} MB)" if os.path.exists(s_bbo) else "  • BBO : No data")
+    print(f"  • AggTrades (Ticks)   : {count_rows(s_trades):>8,} rows ({os.path.getsize(s_trades)/1024/1024:.2f} MB)" if os.path.exists(s_trades) else "  • AggTrades : No data")
+    if last_trade := get_last_row(s_trades):
+        print(f"    └ 최신 체결: ${float(last_trade.get('price', 0)):,.2f} | 수량: {last_trade.get('qty')} | 시간: {last_trade.get('trade_datetime_utc')}")
 
-    print("\n" + "=" * 65)
-    print(f"📊 [{coin.upper()} LIVE TRADES STATS] 총 수집 틱: {total_count:,}건")
-    print("=" * 65)
-    print(f"• 현재가: ${last_px:,.1f} | 최저가: ${min_px:,.1f} | 최고가: ${max_px:,.1f}")
-    print(f"• 매수(Buy) 볼륨 : {buy_vol:12.4f} {coin.upper()} ({buy_count:,}건, {buy_vol/total_vol*100:.1f}%)")
-    print(f"• 매도(Sell) 볼륨: {sell_vol:12.4f} {coin.upper()} ({sell_count:,}건, {sell_vol/total_vol*100:.1f}%)")
-    print(f"• 총 거래량       : {total_vol:12.4f} {coin.upper()}")
-    print("-" * 65)
-    print("🕒 [최근 5건의 실시간 체결 틱]")
-    print(f"{'시간 (UTC)':<23} | {'사이드':<4} | {'가격 ($)':<11} | {'수량':<12}")
-    print("-" * 65)
-    for t in last_trades:
-        side_label = "BUY " if t['side'] == 'B' else "SELL"
-        print(f"{t['datetime_utc']:<23} | {side_label:<4} | {float(t['price']):<11.1f} | {float(t['size']):<12.5f}")
-    print("=" * 65 + "\n")
+    # 2. Binance Futures
+    fut_dir = os.path.join(data_dir, "binance_futures")
+    f_depth = os.path.join(fut_dir, f"{coin_lower}_depth20_live.csv")
+    f_bbo = os.path.join(fut_dir, f"{coin_lower}_bbo_live.csv")
+    f_trades = os.path.join(fut_dir, f"{coin_lower}_aggtrades_live.csv")
+    f_mark = os.path.join(fut_dir, f"{coin_lower}_mark_funding_live.csv")
+    f_liqs = os.path.join(fut_dir, f"{coin_lower}_liquidations_live.csv")
+    f_metrics = os.path.join(fut_dir, f"{coin_lower}_metrics_live.csv")
+
+    print("\n🟢 [2. BINANCE FUTURES (선물)]")
+    print(f"  • L2 20-Depth (100ms) : {count_rows(f_depth):>8,} rows" if os.path.exists(f_depth) else "  • L2 Depth : No data")
+    print(f"  • Real-time BBO (0ms) : {count_rows(f_bbo):>8,} rows" if os.path.exists(f_bbo) else "  • BBO : No data")
+    print(f"  • AggTrades (Ticks)   : {count_rows(f_trades):>8,} rows" if os.path.exists(f_trades) else "  • AggTrades : No data")
+    print(f"  • Mark & Funding (1s) : {count_rows(f_mark):>8,} rows" if os.path.exists(f_mark) else "  • Mark/Funding : No data")
+    print(f"  • Liquidations (청산) : {count_rows(f_liqs):>8,} rows" if os.path.exists(f_liqs) else "  • Liquidations : No data")
+    print(f"  • REST Metrics (OI/LS): {count_rows(f_metrics):>8,} rows" if os.path.exists(f_metrics) else "  • Metrics : No data")
+    if last_mark := get_last_row(f_mark):
+        print(f"    └ Mark Price: ${float(last_mark.get('mark_px', 0)):,.2f} | Funding: {float(last_mark.get('funding_rate', 0))*100:.4f}%")
+    if last_metrics := get_last_row(f_metrics):
+        print(f"    └ Open Interest: {float(last_metrics.get('open_interest', 0)):,.1f} {coin} | 고래 롱숏비: {last_metrics.get('top_trader_long_short_pos_ratio')} | 개미 롱숏비: {last_metrics.get('global_long_short_acc_ratio')}")
+
+    # 3. Hyperliquid
+    hl_dir = os.path.join(data_dir, "hyperliquid")
+    h_depth = os.path.join(hl_dir, f"{coin_lower}_depth20_live.csv")
+    h_trades = os.path.join(hl_dir, f"{coin_lower}_trades_live.csv")
+    h_metrics = os.path.join(hl_dir, f"{coin_lower}_metrics_live.csv")
+
+    print("\n🔵 [3. HYPERLIQUID (DEX)]")
+    print(f"  • L2 20-Depth (~5s)   : {count_rows(h_depth):>8,} rows" if os.path.exists(h_depth) else "  • L2 Depth : No data")
+    print(f"  • Trades (Ticks)      : {count_rows(h_trades):>8,} rows" if os.path.exists(h_trades) else "  • Trades : No data")
+    print(f"  • Metrics (1s OI/Fund): {count_rows(h_metrics):>8,} rows" if os.path.exists(h_metrics) else "  • Metrics : No data")
+    if last_hl_metrics := get_last_row(h_metrics):
+        print(f"    └ Oracle: ${float(last_hl_metrics.get('oracle_px', 0)):,.2f} | Funding: {float(last_hl_metrics.get('funding_rate', 0))*100:.6f}% | OI: {float(last_hl_metrics.get('open_interest', 0)):,.2f} {coin}")
+
+    print("\n" + "=" * 75 + "\n")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Inspect Hyperliquid live market data")
+    parser = argparse.ArgumentParser(description="Inspect Unified Multi-Exchange Live Market Data")
     parser.add_argument("--coin", default="BTC", help="Coin symbol (default: BTC)")
     parser.add_argument("--dir", default="data/live", help="Data directory (default: data/live)")
     args = parser.parse_args()
 
-    inspect_trades(args.coin, args.dir)
+    inspect_all(args.coin, args.dir)
+

@@ -28,7 +28,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y ca-certificates python3 && rm -rf /var/lib/apt/lists/*
 
 # Copy compiled release binary from builder
-COPY --from=builder /app/target/release/hyperliquid-collector /app/hyperliquid-collector
+COPY --from=builder /app/target/release/market-collector /app/market-collector
 COPY scripts /app/scripts
 
 # Create data directory mount point
@@ -38,7 +38,10 @@ RUN mkdir -p /app/data/live
 ENV RUST_LOG=info
 ENV TARGET_COIN=BTC
 ENV DATA_DIR=/app/data/live
+ENV ENABLE_BINANCE_SPOT=true
+ENV ENABLE_BINANCE_FUTURES=true
+ENV ENABLE_HYPERLIQUID=true
 
 VOLUME ["/app/data"]
 
-CMD ["/app/hyperliquid-collector"]
+CMD ["/app/market-collector"]

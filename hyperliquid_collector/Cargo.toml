@@ -1,9 +1,9 @@
 [package]
-name = "hyperliquid-collector"
-version = "0.1.0"
+name = "market-collector"
+version = "0.2.0"
 edition = "2021"
 authors = ["prodong04 <dragon0401@naver.com>"]
-description = "Ultra low-latency, resilient real-time L2 Depth and Trade tick collector for Hyperliquid"
+description = "Ultra high-performance, unified real-time L2 Depth, Tick, Liquidation, and Metrics market data collector for Binance (Spot + Futures) & Hyperliquid"
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
@@ -16,6 +16,7 @@ chrono = { version = "0.4", features = ["serde"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1.0"
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
 
 [profile.release]
 opt-level = 3
