@@ -1,0 +1,244 @@
+/* ==========================================================================
+   Daangn Seed Design System - Lynx Theme Stylesheet
+   ========================================================================== */
+
+:root {
+  --seed-brand-primary: #FF6F0F;
+  --seed-brand-subtle: rgba(255, 111, 15, 0.15);
+  --seed-positive: #00C471;
+  --seed-positive-subtle: rgba(0, 196, 113, 0.15);
+  --seed-negative: #F04452;
+  --seed-negative-subtle: rgba(240, 68, 82, 0.15);
+  --seed-bg-main: #0D1117;
+  --seed-bg-card: #161B22;
+  --seed-border: rgba(240, 246, 252, 0.1);
+  --seed-text-primary: #F0F6FC;
+  --seed-text-secondary: #8B949E;
+  --seed-text-muted: #6E7681;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--seed-bg-main);
+  padding: 16px;
+  min-height: 100vh;
+}
+
+/* 1. Daangn Seed Header */
+.seed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background-color: var(--seed-bg-card);
+  border-radius: 16px;
+  border: 1px solid var(--seed-border);
+  margin-bottom: 16px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.karrot-badge {
+  background-color: var(--seed-brand-primary);
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--seed-text-primary);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.seed-pill {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 9999px;
+}
+
+.pill-paper {
+  background-color: var(--seed-brand-subtle);
+  color: var(--seed-brand-primary);
+  border: 1px solid rgba(255, 111, 15, 0.3);
+}
+
+.pill-live {
+  background-color: var(--seed-positive-subtle);
+  color: var(--seed-positive);
+  border: 1px solid rgba(0, 196, 113, 0.3);
+}
+
+/* 2. Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.seed-card {
+  background-color: var(--seed-bg-card);
+  border: 1px solid var(--seed-border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-label {
+  font-size: 12px;
+  color: var(--seed-text-secondary);
+  font-weight: 500;
+}
+
+.card-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--seed-text-primary);
+}
+
+.card-sub {
+  font-size: 11px;
+  color: var(--seed-text-muted);
+}
+
+.text-positive {
+  color: var(--seed-positive);
+}
+
+.text-negative {
+  color: var(--seed-negative);
+}
+
+/* 3. Real-time Visualizer Panel */
+.visualizer-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 960px) {
+  .visualizer-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-panel {
+  background-color: var(--seed-bg-card);
+  border: 1px solid var(--seed-border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.panel-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--seed-text-primary);
+}
+
+.panel-legend {
+  font-size: 12px;
+  color: var(--seed-text-secondary);
+}
+
+/* 4. Seed List Logs */
+.logs-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 800px) {
+  .logs-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+.log-panel {
+  background-color: var(--seed-bg-card);
+  border: 1px solid var(--seed-border);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.seed-tile {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.tile-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-action {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.action-buy {
+  background-color: var(--seed-positive-subtle);
+  color: var(--seed-positive);
+}
+
+.action-sell {
+  background-color: var(--seed-negative-subtle);
+  color: var(--seed-negative);
+}
+
+.action-hold {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--seed-text-secondary);
+}
+
+.tile-desc {
+  font-size: 12px;
+  color: var(--seed-text-primary);
+}
+
+.tile-time {
+  font-size: 11px;
+  color: var(--seed-text-muted);
+}

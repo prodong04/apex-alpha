@@ -1,0 +1,6 @@
+{
+  "$schema": "https://seed-design.io/schema/config.json",
+  "tsx": true,
+  "framework": "lynx",
+  "path": "./seed-design"
+}

@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  apex-stat-arb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apex_stat_arb_live
+    restart: unless-stopped
+    env_file:
+      - .env  # 런타임에 호스트의 .env 주입 (이미지에 굽지 않음)
+    volumes:
+      - ./config:/app/config:ro
+      - ./logs:/app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 4096M

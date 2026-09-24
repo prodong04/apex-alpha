@@ -1,0 +1,30 @@
+# ==============================================================================
+# Apex Alpha - Unified Trading Engine Configuration
+# ==============================================================================
+
+symbol = "BTC"
+data_dir = "data/live"
+
+# Mode: false = Offline Paper Trading (Simulation), true = Live Trading (API Key required)
+live_mode = false
+
+# Initial Capital for Paper Trading (USDT / USD)
+initial_balance = 10000.0
+leverage = 1.0
+
+# Fee Rates (Binance/Hyperliquid standard Tier 1)
+# 0.0002 = 0.02% (Maker), 0.0005 = 0.05% (Taker)
+maker_fee_rate = 0.0002
+taker_fee_rate = 0.0005
+
+# Market Data Collectors Enable / Disable
+enable_binance_spot = true
+enable_binance_futures = true
+enable_hyperliquid = true
+
+# Web Dashboard & WebSocket Server (Zero-Impact UI)
+server_host = "0.0.0.0"
+server_port = 3000
+
+# Strategy Selection: "passive" (No-op), "momentum"
+strategy = "passive"

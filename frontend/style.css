@@ -1,0 +1,355 @@
+/* ==============================================================================
+   SEED Design System - Official Theme (https://seed-design.io)
+   ============================================================================== */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css");
+
+:root {
+  /* SEED Color Tokens (from https://seed-design.io) */
+  --seed-color-palette-carrot-600: #FF6F0F;
+  --seed-color-palette-carrot-500: #FF8A3D;
+  --seed-color-palette-carrot-100: rgba(255, 111, 15, 0.12);
+  --seed-color-palette-carrot-alpha-200: rgba(255, 111, 15, 0.25);
+
+  --seed-color-palette-green-500: #00C471;
+  --seed-color-palette-green-100: rgba(0, 196, 113, 0.14);
+  --seed-color-palette-red-500: #F04452;
+  --seed-color-palette-red-100: rgba(240, 68, 82, 0.14);
+  --seed-color-palette-blue-500: #38BDF8;
+  --seed-color-palette-yellow-500: #FFAA00;
+
+  --seed-color-bg-layer-default: #0F1216;
+  --seed-color-bg-layer-card: #161A22;
+  --seed-color-bg-layer-elevated: #1E232E;
+  
+  --seed-color-stroke-neutral: rgba(240, 246, 252, 0.08);
+  --seed-color-stroke-neutral-hover: rgba(255, 111, 15, 0.4);
+
+  --seed-color-fg-neutral: #F0F6FC;
+  --seed-color-fg-neutral-muted: #8B95A1;
+  --seed-color-fg-neutral-subtle: #64748B;
+
+  /* SEED Radii */
+  --seed-radius-r1: 6px;
+  --seed-radius-r2: 10px;
+  --seed-radius-r3: 14px;
+  --seed-radius-r4: 18px;
+  --seed-radius-full: 9999px;
+
+  /* SEED Elevation */
+  --seed-elevation-card: 0 4px 20px rgba(0, 0, 0, 0.35);
+  --seed-elevation-floating: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Pretendard Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-color: var(--seed-color-bg-layer-default);
+  color: var(--seed-color-fg-neutral);
+  min-height: 100vh;
+  padding: 16px 20px;
+  overflow-x: hidden;
+}
+
+/* 1. SEED Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 14px 22px;
+  background: var(--seed-color-bg-layer-card);
+  border: 1px solid var(--seed-color-stroke-neutral);
+  border-radius: var(--seed-radius-r4);
+  box-shadow: var(--seed-elevation-card);
+}
+
+.logo-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.karrot-badge {
+  background: var(--seed-color-palette-carrot-600);
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 13px;
+  padding: 5px 12px;
+  border-radius: var(--seed-radius-r1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 10px var(--seed-color-palette-carrot-alpha-200);
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.header-subtitle {
+  font-size: 12px;
+  color: var(--seed-color-fg-neutral-muted);
+  margin-left: 4px;
+}
+
+.header-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.seed-pill {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: var(--seed-radius-full);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.seed-pill.paper {
+  background: var(--seed-color-palette-carrot-100);
+  color: var(--seed-color-palette-carrot-500);
+  border: 1px solid rgba(255, 111, 15, 0.3);
+}
+
+.seed-pill.status {
+  background: var(--seed-color-palette-green-100);
+  color: var(--seed-color-palette-green-500);
+  border: 1px solid rgba(0, 196, 113, 0.3);
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--seed-color-palette-green-500);
+  box-shadow: 0 0 8px var(--seed-color-palette-green-500);
+  animation: pulse-ring 1.5s infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+/* 2. Metric Cards Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.seed-card {
+  background: var(--seed-color-bg-layer-card);
+  border: 1px solid var(--seed-color-stroke-neutral);
+  border-radius: var(--seed-radius-r3);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: var(--seed-elevation-card);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.seed-card:hover {
+  border-color: var(--seed-color-stroke-neutral-hover);
+  transform: translateY(-2px);
+}
+
+.card-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--seed-color-fg-neutral-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.card-value {
+  font-size: 20px;
+  font-weight: 700;
+  font-feature-settings: "tnum";
+}
+
+.card-sub {
+  font-size: 11px;
+  color: var(--seed-color-fg-neutral-subtle);
+}
+
+.text-positive {
+  color: var(--seed-color-palette-green-500);
+}
+
+.text-negative {
+  color: var(--seed-color-palette-red-500);
+}
+
+/* 3. THREE DEDICATED EXCHANGE CHARTS GRID */
+.exchange-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+@media (max-width: 1200px) {
+  .exchange-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.exchange-panel {
+  background: var(--seed-color-bg-layer-card);
+  border: 1px solid var(--seed-color-stroke-neutral);
+  border-radius: var(--seed-radius-r3);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--seed-elevation-card);
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.head-title {
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.head-price {
+  font-size: 15px;
+  font-weight: 800;
+  font-feature-settings: "tnum";
+}
+
+.dot-spot { color: var(--seed-color-palette-yellow-500); }
+.dot-fut { color: var(--seed-color-palette-green-500); }
+.dot-hl { color: var(--seed-color-palette-blue-500); }
+
+.canvas-box {
+  width: 100%;
+  height: 310px;
+  background: #090C10;
+  border-radius: var(--seed-radius-r2);
+  border: 1px solid rgba(240, 246, 252, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 4. Bottom Split Grid */
+.bottom-split-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 960px) {
+  .bottom-split-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-card, .panel-card {
+  background: var(--seed-color-bg-layer-card);
+  border: 1px solid var(--seed-color-stroke-neutral);
+  border-radius: var(--seed-radius-r3);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--seed-elevation-card);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.chart-title, .panel-title {
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-box {
+  width: 100%;
+  height: 230px;
+}
+
+.table-wrapper {
+  max-height: 230px;
+  overflow-y: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+th {
+  text-align: left;
+  padding: 8px 10px;
+  color: var(--seed-color-fg-neutral-muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--seed-color-stroke-neutral);
+  position: sticky;
+  top: 0;
+  background: var(--seed-color-bg-layer-card);
+}
+
+td {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(240, 246, 252, 0.03);
+}
+
+.badge-buy {
+  background: var(--seed-color-palette-green-100);
+  color: var(--seed-color-palette-green-500);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.badge-sell {
+  background: var(--seed-color-palette-red-100);
+  color: var(--seed-color-palette-red-500);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.badge-hold {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--seed-color-fg-neutral-muted);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}

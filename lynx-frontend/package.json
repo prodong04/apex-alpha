@@ -1,0 +1,23 @@
+{
+  "name": "apex-lynx-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "rspeedy dev",
+    "build": "rspeedy build"
+  },
+  "dependencies": {
+    "@lynx-js/config-rsbuild-plugin": "^0.2.2",
+    "@lynx-js/react": "^0.125.0",
+    "@seed-design/lynx-css": "^0.8.0",
+    "@seed-design/lynx-react": "^0.4.0",
+    "@seed-design/tailwind3-plugin": "^2.3.0",
+    "tailwindcss": "^3.4.19"
+  },
+  "devDependencies": {
+    "@lynx-js/rspeedy": "^0.16.5",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "typescript": "^5.3.0"
+  }
+}

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apex Alpha - Real-Time HFT Execution Engine</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+
+  <!-- 1. SEED Header -->
+  <header class="header">
+    <div class="logo-group">
+      <span class="karrot-badge">🥕 당근 Seed</span>
+      <h1 class="header-title">Apex Alpha HFT Execution Engine</h1>
+      <span class="header-subtitle">Binance Spot Lead-Lag ➔ Hyperliquid Perp Post-Only (500ms Fast Cancel & Deadman's Switch)</span>
+    </div>
+    <div class="header-status">
+      <span class="seed-pill live" id="deadman-tag">🛡️ Deadman's Switch: 정상</span>
+      <span class="seed-pill paper" id="mode-tag">● 실시간 페이퍼 매칭 모드</span>
+      <span class="seed-pill status">
+        <span class="pulse-dot"></span>
+        <span id="conn-status">실시간 HFT 엔진 가동 중</span>
+      </span>
+    </div>
+  </header>
+
+  <!-- 2. Real-time Summary Cards -->
+  <section class="metrics-grid">
+    <div class="seed-card">
+      <div class="card-label">🟡 Binance Spot (선행 신호 레이더)</div>
+      <div class="card-value" id="val-spot-price">$0.00</div>
+      <div class="card-sub" id="val-spot-ticks">1초 스파이크 감시 중 (기준: $80)</div>
+    </div>
+
+    <div class="seed-card">
+      <div class="card-label">🔵 Hyperliquid Perp (실제 체결 거래소)</div>
+      <div class="card-value" id="val-hl-price">$0.00</div>
+      <div class="card-sub" id="val-hl-bbo">Best Bid: $0.0 | Ask: $0.0</div>
+    </div>
+
+    <div class="seed-card">
+      <div class="card-label">순자산 (Net Equity, 수수료 차감 후)</div>
+      <div class="card-value text-positive" id="val-equity">$10,000.00</div>
+      <div class="card-sub" id="val-net-pnl">순손익: +$0.00 (+0.00%) | 승률: 0%</div>
+    </div>
+
+    <div class="seed-card">
+      <div class="card-label">포지션 & 재고 (Max: 1.0 BTC)</div>
+      <div class="card-value" id="val-pos-size">무포지션 (0.00 BTC)</div>
+      <div class="card-sub" id="val-pos-entry">진입가: $0.00 | ROE: 0.00%</div>
+    </div>
+
+    <div class="seed-card">
+      <div class="card-label">활성 미체결 주문 (500ms 만료)</div>
+      <div class="card-value text-positive" id="val-active-orders">0건 대기 중</div>
+      <div class="card-sub" id="val-total-fees">누적 메이커 수수료: $0.0000</div>
+    </div>
+  </section>
+
+  <!-- 3. REAL-TIME MULTI-EXCHANGE CHARTS -->
+  <section class="exchange-charts-grid">
+    <!-- Chart 1: Binance Spot -->
+    <div class="exchange-panel">
+      <div class="panel-head">
+        <div class="head-title">
+          <span class="dot-spot">●</span>
+          <span>Binance Spot (선행 틱 & 볼륨 스파이크 레이더)</span>
+        </div>
+        <div class="head-price" id="panel-spot-px">$0.00</div>
+      </div>
+      <div class="canvas-box">
+        <canvas id="canvas-spot"></canvas>
+      </div>
+    </div>
+
+    <!-- Chart 2: Hyperliquid Perp -->
+    <div class="exchange-panel">
+      <div class="panel-head">
+        <div class="head-title">
+          <span class="dot-hl">●</span>
+          <span>Hyperliquid Perp (지정가 발주 & 실시간 체결 틱)</span>
+        </div>
+        <div class="head-price" id="panel-hl-px">$0.00</div>
+      </div>
+      <div class="canvas-box">
+        <canvas id="canvas-hl"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. BOTTOM SECTION: Real-time Equity Curve & Live HFT Order Lifecycle Log -->
+  <section class="bottom-split-grid">
+    <!-- Cumulative PnL Curve -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">
+          <span>💰 실시간 순자산 곡선 (Real-Time Net Equity Curve)</span>
+        </div>
+        <div class="chart-legend">
+          <span style="color: #00C471;">💎 Net Equity ($)</span>
+        </div>
+      </div>
+      <div id="chart-pnl" class="chart-box"></div>
+    </div>
+
+    <!-- Live Order & Execution Timeline -->
+    <div class="panel-card">
+      <div class="panel-title">⚡ 실시간 HFT 주문 라이프사이클 (발주 ➔ 500ms 타임아웃 / 체결)</div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>시각</th>
+              <th>주문ID</th>
+              <th>구분</th>
+              <th>가격</th>
+              <th>수량</th>
+              <th>상태 / 사유</th>
+            </tr>
+          </thead>
+          <tbody id="order-table-body">
+            <tr><td colspan="6" style="text-align:center; color: var(--seed-color-fg-neutral-muted);">실시간 바이낸스 1초 스파이크 신호 대기 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

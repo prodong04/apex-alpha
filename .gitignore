@@ -116,5 +116,10 @@ venv.bak/
 # OS files
 .DS_Store
 
-# Data files (Ensure CSV files are ignored, while allowing code/modules inside the data directory to be tracked)
+# Data files
 *.csv
+*.zip
+data/
+scratch/
+node_modules/
+**/node_modules/

@@ -1,0 +1,22 @@
+[package]
+name = "apex-stat-arb-production"
+version = "2.0.0"
+edition = "2021"
+authors = ["Apex Alpha Quantitative Engineering"]
+description = "Two Sigma Grade Point-In-Time 120H DTW Market-Neutral Stat-Arb Engine"
+
+[dependencies]
+rayon = "1.10"
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tokio = { version = "1.38", features = ["full"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
